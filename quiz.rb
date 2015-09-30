@@ -1,24 +1,24 @@
 require 'csv'
 require 'pry'
 
-class Strand
-  attr :id
-
-  def initialize(id)
-    @id = id
-  end
-end
-
-class Standard
-  attr :id
-  attr :strand_id
-
-  def initialize(id, strand_id)
-    @id = id
-    @strand_id = strand_id
-  end
-
-end
+# class Strand
+#   attr :id
+#
+#   def initialize(id)
+#     @id = id
+#   end
+# end
+#
+# class Standard
+#   attr :id
+#   attr :strand_id
+#
+#   def initialize(id, strand_id)
+#     @id = id
+#     @strand_id = strand_id
+#   end
+#
+# end
 
 class Question
   attr :id
@@ -40,7 +40,7 @@ class Quiz
     @num_of_questions = num_of_questions
 
     load_and_initialize_data
-    # choose_questions
+    choose_questions
   end
 
   def load_and_initialize_data
@@ -53,26 +53,36 @@ class Quiz
   end
 
   def initialize_data
-    @strands, @standards, @questions = Array.new
-
-    # @unique_strand_ids.each do |strand_id|
-    #   @strands << Strand.new(strand_id)
-    # end
+    @questions = Array.new
 
     CSV.foreach("questions.csv", { encoding: "UTF-8", headers: true, header_converters: :symbol, converters: :all}) do |row|
       row_hash = row.to_hash
       q = Question.new(row_hash[:question_id], row_hash[:standard_id], row_hash[:strand_id])
+      @questions << q
     end
   end
 
   def choose_questions
     chosen_questions = Array.new
-    while chosen_questions.size < num_of_questions do
-        @unique_strand_ids.cycle do |strand_id|
 
+    strand_count = @num_of_questions/@unique_strand_ids.length
+    standard_count = @num_of_questions/@unique_standard_ids.length
+
+    while chosen_questions.size < @num_of_questions do
+      @unique_strand_ids.cycle(strand_count) do |strand_id|
+        @unique_standard_ids.cycle(standard_count) do |standard_id|
+          cq = @questions.select {|q| q.strand_id == strand_id && q.standard_id == standard_id }
+
+          cq.each do |chosen_question|
+            chosen_questions <<  chosen_question unless chosen_questions.any?{ |cq| cq.id == chosen_question.id }
+          end
+          break if chosen_questions.size == @num_of_questions
         end
-
+        break if chosen_questions.size == @num_of_questions
+      end
     end
+
+    binding.pry
   end
 end
 
