@@ -89,23 +89,35 @@ class Quiz
   def choose_questions
     chosen_questions = Array.new
 
-    strand_count = @num_of_questions/@unique_strand_ids.length
-    standard_count = @num_of_questions/@unique_standard_ids.length
+    strand_count = @unique_strand_ids.length
+    standard_count = @unique_standard_ids.length
 
-    while chosen_questions.size < @num_of_questions do
-      @unique_standard_ids.cycle(standard_count) do |standard_id|
-        @unique_strand_ids.cycle(strand_count) do |strand_id|
-          cq = @questions.select {|q| q.strand_id == strand_id && q.standard_id == standard_id }
+    standards_per_strand = standard_count / strand_count
+    standard_counter = 0
 
-          cq.each do |chosen_question|
-            chosen_questions <<  chosen_question unless chosen_questions.any?{ |cq| cq.id == chosen_question.id }
-          end
+
+    @unique_strand_ids.cycle do |strand_id|
+      puts "strand id -- #{strand_id}"
+      begin
+        @unique_standard_ids.cycle do |standard_id|
+
+          standard_counter +=1
+          puts "SC -- #{standard_counter} ---- Standard id: #{standard_id}, strand_id: #{strand_id}"
+          cq = @questions.find {|q| q.strand_id == strand_id && q.standard_id == standard_id }
+          chosen_questions <<  cq unless chosen_questions.any?{ |q| q.id == cq.id }
+          # binding.pry
           break if chosen_questions.size == @num_of_questions
+          raise 'outer_next' if standards_per_strand == standard_counter
         end
-        break if chosen_questions.size == @num_of_questions
+      rescue
+        binding.pry
+        if chosen_questions.size == @num_of_questions
+          break
+        else
+          next
+        end
       end
     end
-
     binding.pry
   end
 end
