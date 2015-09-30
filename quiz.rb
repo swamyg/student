@@ -102,14 +102,16 @@ class Quiz
         @unique_standard_ids.cycle do |standard_id|
 
           standard_counter +=1
-          puts "SC -- #{standard_counter} ---- Standard id: #{standard_id}, strand_id: #{strand_id}"
+          # puts "SC -- #{standard_counter} ---- Standard id: #{standard_id}, strand_id: #{strand_id}"
           cq = @questions.find {|q| q.strand_id == strand_id && q.standard_id == standard_id }
+          # puts "SELECTED QUESTION --> #{cq.id} --- #{cq.strand_id} -- #{cq.standard_id}"
+          next unless cq
           chosen_questions <<  cq unless chosen_questions.any?{ |q| q.id == cq.id }
           # binding.pry
           break if chosen_questions.size == @num_of_questions
-          raise 'outer_next' if standards_per_strand == standard_counter
+          raise ArgumentError if standards_per_strand == standard_counter
         end
-      rescue
+      rescue ArgumentError
         binding.pry
         if chosen_questions.size == @num_of_questions
           break
