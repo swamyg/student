@@ -1,25 +1,6 @@
 require 'csv'
 require 'pry'
 
-# class Strand
-#   attr :id
-#
-#   def initialize(id)
-#     @id = id
-#   end
-# end
-#
-# class Standard
-#   attr :id
-#   attr :strand_id
-#
-#   def initialize(id, strand_id)
-#     @id = id
-#     @strand_id = strand_id
-#   end
-#
-# end
-
 class Question
   attr :id
   attr :standard_id
@@ -61,66 +42,27 @@ class Quiz
     end
   end
 
-  # def choose_questions
-  #   chosen_questions = Array.new
-  #
-  #   # strand_count = @num_of_questions/@unique_strand_ids.length
-  #   # standard_count = @num_of_questions/@unique_standard_ids.length
-  #
-  #   (1..@num_of_questions).each do |n|
-  #     strand_index = n % @unique_strand_ids.length
-  #     standard_index = n % @unique_standard_ids.length
-  #     strand_id = @unique_strand_ids[strand_index]
-  #     standard_id = @unique_standard_ids[standard_index]
-  #
-  #     cq = @questions.select {|q| q.strand_id == strand_id && q.standard_id == standard_id }
-  #     binding.pry
-  #     cq.each do |chosen_question|
-  #       binding.pry
-  #       chosen_questions <<  chosen_question unless chosen_questions.any?{ |cq| cq.id == chosen_question.id }
-  #     end
-  #
-  #     # binding.pry
-  #   end
-  #
-  #   # binding.pry
-  # end
-
   def choose_questions
     chosen_questions = Array.new
 
-    strand_count = @unique_strand_ids.length
-    standard_count = @unique_standard_ids.length
+    strand_count = @num_of_questions/@unique_strand_ids.length
+    standard_count = @num_of_questions/@unique_standard_ids.length
 
-    standards_per_strand = standard_count / strand_count
-    standard_counter = 0
+    while chosen_questions.size < @num_of_questions do
+      @unique_standard_ids.cycle(standard_count) do |standard_id|
+        @unique_strand_ids.cycle(strand_count) do |strand_id|
+          cq = @questions.select {|q| q.strand_id == strand_id && q.standard_id == standard_id }
 
-
-    @unique_strand_ids.cycle do |strand_id|
-      puts "strand id -- #{strand_id}"
-      begin
-        @unique_standard_ids.cycle do |standard_id|
-
-          standard_counter +=1
-          # puts "SC -- #{standard_counter} ---- Standard id: #{standard_id}, strand_id: #{strand_id}"
-          cq = @questions.find {|q| q.strand_id == strand_id && q.standard_id == standard_id }
-          # puts "SELECTED QUESTION --> #{cq.id} --- #{cq.strand_id} -- #{cq.standard_id}"
-          next unless cq
-          chosen_questions <<  cq unless chosen_questions.any?{ |q| q.id == cq.id }
-          # binding.pry
+          cq.each do |chosen_question|
+            chosen_questions <<  chosen_question unless chosen_questions.any?{ |cq| cq.id == chosen_question.id }
+          end
           break if chosen_questions.size == @num_of_questions
-          raise ArgumentError if standards_per_strand == standard_counter
         end
-      rescue ArgumentError
-        binding.pry
-        if chosen_questions.size == @num_of_questions
-          break
-        else
-          next
-        end
+        break if chosen_questions.size == @num_of_questions
       end
     end
-    binding.pry
+
+    puts "Chosen question IDs: #{chosen_questions.map(&:id)}"
   end
 end
 
